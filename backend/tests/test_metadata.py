@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from app.services.metadata import clean_title, extract_domain, extract_favicon_url, fetch_metadata
 from bs4 import BeautifulSoup
 import pytest
+import httpx
 
 # ---------------------------------------------------------------------------
 # Unit tests: pure helper functions
@@ -112,3 +113,70 @@ async def test_fetch_metadata_no_title_falls_back_to_domain():
 
         assert success is True
         assert title == "example.com"
+
+
+@pytest.mark.asyncio
+async def test_fetch_metadata_http_error_falls_back_to_domain():
+    with patch("httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client.get = AsyncMock(return_value=_mock_response("", status_code=404))
+        mock_client_cls.return_value = mock_client
+
+        title, favicon, success, error = await fetch_metadata("https://example.com/missing")
+
+        assert success is False
+        assert title == "example.com"
+        assert "404" in error
+
+
+@pytest.mark.asyncio
+async def test_fetch_metadata_timeout_falls_back():
+    with patch("httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client.get = AsyncMock(side_effect=httpx.TimeoutException("timed out"))
+        mock_client_cls.return_value = mock_client
+
+        title, favicon, success, error = await fetch_metadata("https://slow-site.com")
+
+        assert success is False
+        assert title == "slow-site.com"
+        assert error == "Request timed out"
+
+
+@pytest.mark.asyncio
+async def test_fetch_metadata_connection_error_falls_back():
+    with patch("httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client.get = AsyncMock(
+            side_effect=httpx.ConnectError("Connection refused")
+        )
+        mock_client_cls.return_value = mock_client
+
+        title, favicon, success, error = await fetch_metadata("https://unreachable.xyz")
+
+        assert success is False
+        assert title == "unreachable.xyz"
+        assert error is not None
+
+
+@pytest.mark.asyncio
+async def test_fetch_metadata_non_html_content():
+    with patch("httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_resp = _mock_response("", status_code=200)
+        mock_resp.headers = {"content-type": "application/pdf"}
+        mock_client.get = AsyncMock(return_value=mock_resp)
+        mock_client_cls.return_value = mock_client
+
+        title, favicon, success, error = await fetch_metadata("https://example.com/doc.pdf")
+
+        assert success is False
+        assert "Non-HTML" in error
