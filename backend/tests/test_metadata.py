@@ -1,5 +1,7 @@
-
-from app.services.metadata import clean_title, extract_domain
+from unittest.mock import AsyncMock, MagicMock, patch
+from app.services.metadata import clean_title, extract_domain, extract_favicon_url, fetch_metadata
+from bs4 import BeautifulSoup
+import pytest
 
 # ---------------------------------------------------------------------------
 # Unit tests: pure helper functions
@@ -24,3 +26,89 @@ def test_clean_title_strips_whitespace():
 
 def test_clean_title_normalizes_newlines():
     assert clean_title("Title\n  with\t  tabs") == "Title with tabs"
+
+def test_extract_favicon_from_link_tag():
+    html = '<html><head><link rel="icon" href="/favicon.png"></head></html>'
+    soup = BeautifulSoup(html, "html.parser")
+    result = extract_favicon_url(soup, "https://example.com")
+    assert result == "https://example.com/favicon.png"
+
+
+def test_extract_favicon_fallback():
+    html = "<html><head></head></html>"
+    soup = BeautifulSoup(html, "html.parser")
+    result = extract_favicon_url(soup, "https://example.com/page")
+    assert result == "https://example.com/favicon.ico"
+
+
+def _mock_response(html: str, status_code: int = 200, url: str = "https://github.com"):
+    mock = MagicMock()
+    mock.status_code = status_code
+    mock.text = html
+    mock.headers = {"content-type": "text/html; charset=utf-8"}
+    mock.url = url
+    return mock
+
+
+HTML_WITH_TITLE = """
+<html>
+<head>
+    <title>  GitHub: Let's build from here  </title>
+    <link rel="icon" href="/favicon.ico">
+</head>
+<body></body>
+</html>
+"""
+@pytest.mark.asyncio
+async def test_fetch_metadata_success():
+    with patch("httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client.get = AsyncMock(return_value=_mock_response(HTML_WITH_TITLE))
+        mock_client_cls.return_value = mock_client
+
+        title, favicon, success, error = await fetch_metadata("https://github.com")
+
+        assert success is True
+        assert title == "GitHub: Let's build from here"
+        assert favicon is not None
+        assert error is None
+
+
+HTML_OG_TITLE = """
+<html>
+<head>
+    <meta property="og:title" content="Open Graph Title">
+</head>
+</html>
+"""
+@pytest.mark.asyncio
+async def test_fetch_metadata_uses_og_title_when_no_title_tag():
+    with patch("httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client.get = AsyncMock(return_value=_mock_response(HTML_OG_TITLE))
+        mock_client_cls.return_value = mock_client
+
+        title, favicon, success, error = await fetch_metadata("https://example.com")
+
+        assert success is True
+        assert title == "Open Graph Title"
+
+
+HTML_NO_TITLE = """<html><head></head><body><h1>Hello</h1></body></html>"""
+@pytest.mark.asyncio
+async def test_fetch_metadata_no_title_falls_back_to_domain():
+    with patch("httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client.get = AsyncMock(return_value=_mock_response(HTML_NO_TITLE))
+        mock_client_cls.return_value = mock_client
+
+        title, favicon, success, error = await fetch_metadata("https://example.com")
+
+        assert success is True
+        assert title == "example.com"
