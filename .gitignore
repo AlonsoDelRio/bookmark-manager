@@ -29,3 +29,9 @@ dist-ssr
 
 #backend files
 __pycache__
+jwt-generator.sh
+.pytest_cache
+.ruff_cache
+
+#action files
+.act*
