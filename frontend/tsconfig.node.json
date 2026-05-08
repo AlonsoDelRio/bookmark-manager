@@ -16,7 +16,6 @@
     "allowSyntheticDefaultImports": true,
     /* Bundler mode */
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     /* Linting */
