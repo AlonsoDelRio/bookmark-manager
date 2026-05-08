@@ -48,3 +48,28 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: "placeholder-key"
           SUPABASE_JWT_SECRET: "placeholder-secret"
         run: pytest --cov=app --cov-report=term-missing -v
+
+  frontend-typecheck:
+    name: Frontend — type-check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: TypeScript type-check
+        run: pnpm type-check

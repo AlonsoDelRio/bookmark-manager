@@ -3,12 +3,12 @@
 A full-stack web application to save, organize, and search personal bookmarks with automatic metadata extraction.
 
 ## Status
-🚧 Work in progress
+🚧 Work in progress — Authentication UI and base frontend architecture are implemented.
 
 ## Stack
 - **Backend**: Python 3.12 + FastAPI
 - **Database**: Supabase (PostgreSQL + Auth)
-- **Frontend**: React 18 + TypeScript
+- **Frontend**: React 18 + TypeScript + React Query
 - **Infrastructure**: Docker + GitHub Actions
 
 ## Project Structure
@@ -35,9 +35,16 @@ bookmark-manager/
 │   ├── .dockerignore
 │   ├── ruff.toml               # lint config
 │   └── Dockerfile
-├── frontend/                   # React app — auth UI coming next
+├── frontend/                   # React app - CRUD coming next
 │   ├── src/
-│   │   ├── App.tsx             # Currently renders "Bookmark Manager — coming soon"
+│   │   ├── api/                # API base client with JWT injection
+│   │   ├── components/         # UI components
+│   │   ├── contexts/           # useAuth context for cross-tab sync
+│   │   ├── lib/                # Supabase singleton client
+│   │   ├── pages/              # AuthPage (login/signup)
+│   │   ├── styles/             # Design system CSS variables
+│   │   ├── types/              # Shared TypeScript types
+│   │   ├── App.tsx             # Auth routing and providers
 │   │   └── main.tsx
 │   ├── .dockerignore
 │   ├── eslint.config.js
@@ -106,6 +113,7 @@ GitHub Actions runs on every pull request to `main`:
 - **Verify** — checks repository structure
 - **Backend lint** — ruff on `app/`
 - **Backend tests** — pytest with coverage
+- **Frontend type-check** — `tsc --noEmit` on `frontend/`
 
 ## Design Decisions
 
@@ -117,3 +125,6 @@ If the page does not respond, returns an error, or the title cannot be extracted
 
 ### Communication with Supabase (FastAPI Backend + SDK)
 A FastAPI backend utilizing the Supabase Python SDK is used rather than connecting directly from the frontend or making manual HTTP requests. This centralizes business logic, providing a secure backend environment to perform tasks restricted in the browser due to CORS, such as scraping metadata. Using the official Supabase SDK also abstracts away the complexity of raw REST API calls.
+
+### Frontend Architecture & Authentication
+I established a robust frontend architecture using React, Vite, and strict TypeScript. Authentication is handled client-side via a Supabase singleton client, with state managed by a `useAuth` context that synchronizes sessions across browser tabs. I configured an API base client that automatically injects JWTs into requests for secure communication with the FastAPI backend. Additionally, I integrated React Query for efficient data fetching and cache management, ensuring a scalable foundation for upcoming features.
