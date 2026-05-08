@@ -105,3 +105,14 @@ GitHub Actions corre en cada pull request a `main`:
 - **Verify** — verifica la estructura del repositorio
 - **Backend lint** — ruff sobre `app/`
 - **Backend tests** — pytest con cobertura
+
+## Decisiones de Diseño
+
+### Seguridad de Datos (RLS)
+Cada usuario solo puede ver y modificar sus propios marcadores. Esto está resuelto a nivel de base de datos usando Row Level Security (RLS) de Supabase, no solo en el código de la aplicación. Esto asegura que, aunque existiera una falla lógica en el código del backend, las políticas de la base de datos por sí solas impedirán que un usuario acceda o modifique información de otros.
+
+### Resiliencia al Guardar Marcadores
+Si la página no responde, responde con un error, o no se puede extraer el título, el marcador se guarda de todas formas con un título de fallback (por ejemplo, el dominio). No se bloquea la creación por una falla de red externa. La extracción de metadatos se intenta al guardar la URL, pero las fallas externas no bloquean la acción principal.
+
+### Comunicación con Supabase (Backend en FastAPI + SDK)
+Se utiliza un backend en FastAPI implementando el SDK de Supabase para Python, en lugar de conectar directamente desde el frontend o realizar peticiones HTTP manuales. Esto centraliza la lógica de negocio, proveyendo un entorno seguro para tareas que no se pueden hacer en el navegador por temas de CORS, como el scraping de metadatos. El uso del SDK oficial abstrae la complejidad de crear consultas a la API REST.

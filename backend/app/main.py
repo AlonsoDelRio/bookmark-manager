@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import metadata
+from app.routers import bookmarks, metadata, tags
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -27,6 +27,8 @@ app.add_middleware(
 )
 
 app.include_router(metadata.router, prefix="/api/metadata", tags=["metadata"])
+app.include_router(bookmarks.router, prefix="/api/bookmarks", tags=["bookmarks"])
+app.include_router(tags.router, prefix="/api/tags", tags=["tags"])
 
 @app.get("/health")
 async def health_check():
