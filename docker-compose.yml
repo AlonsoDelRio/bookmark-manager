@@ -1,0 +1,37 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      target: production
+    ports:
+      - "8000:8000"
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - CORS_ORIGINS=${CORS_ORIGINS:-["http://localhost:5173","http://localhost"]}
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      target: production
+      args:
+        - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+        - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:8000}
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  default:
+    name: bookmark-manager-net

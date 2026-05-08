@@ -76,3 +76,55 @@ jobs:
 
       - name: ESLint
         run: pnpm lint
+  
+  docker:
+    name: Docker Compose Smoke Test
+    runs-on: ubuntu-latest
+    needs: [backend-lint, frontend-typecheck]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create dummy .env file
+        run: |
+          echo "SUPABASE_URL=https://dummy.supabase.co" > .env
+          echo "SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.dummy" >> .env
+          echo "SUPABASE_JWT_SECRET=super-secret-jwt-token-with-at-least-32-characters-long" >> .env
+          echo "CORS_ORIGINS=[\"http://localhost\"]" >> .env
+          echo "VITE_SUPABASE_URL=https://dummy.supabase.co" >> .env
+          echo "VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.dummy" >> .env
+          echo "VITE_API_URL=http://localhost:8000" >> .env
+
+      - name: Build and Start Docker Compose
+        run: docker compose up --build -d
+
+      - name: Wait for backend healthcheck to pass
+        run: |
+          echo "Waiting for backend to be healthy..."
+          for i in {1..12}; do
+            CONTAINER_ID=$(docker compose ps -q backend)
+            if [ -z "$CONTAINER_ID" ]; then
+              STATUS="starting"
+            else
+              STATUS=$(docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" $CONTAINER_ID || echo "starting")
+            fi
+            if [ "$STATUS" = "healthy" ]; then
+              echo "Backend is healthy!"
+              exit 0
+            fi
+            echo "Current status: $STATUS. Waiting 5s..."
+            sleep 5
+          done
+          echo "Backend failed to become healthy. Logs:"
+          docker compose logs backend
+          exit 1
+
+      - name: Test Frontend
+        run: curl -f -s -o /dev/null -w "%{http_code}\n" http://localhost:80 | grep 200
+
+      - name: Test Backend Health API
+        run: curl -f -s http://localhost:8000/health | grep '"status":"ok"'
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
