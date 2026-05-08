@@ -2,6 +2,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Toaster } from "react-hot-toast"
 import { AuthProvider, useAuth } from "@/hooks/useAuth"
 import { AuthPage } from "@/pages/AuthPage"
+import { DashboardPage } from "@/pages/DashboardPage";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,18 +25,7 @@ function AppContent() {
     )
   }
 
-  if (!session) return <AuthPage />
-
-  // Dashboard coming in next PR
-  return (
-    <div style={{
-      display: "flex", alignItems: "center", justifyContent: "center",
-      height: "100vh", color: "var(--text-muted)", fontSize: "1rem",
-      fontFamily: "var(--font-sans)"
-    }}>
-      Dashboard — coming soon
-    </div>
-  )
+  return session ? <DashboardPage /> : <AuthPage />;
 }
 
 export function App() {
@@ -53,6 +44,7 @@ export function App() {
             },
           }}
         />
+        {import.meta.env.DEV && <ReactQueryDevtools />}
       </AuthProvider>
     </QueryClientProvider>
   )
