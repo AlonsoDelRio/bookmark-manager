@@ -73,3 +73,6 @@ jobs:
 
       - name: TypeScript type-check
         run: pnpm type-check
+
+      - name: ESLint
+        run: pnpm lint

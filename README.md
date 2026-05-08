@@ -3,7 +3,7 @@
 A full-stack web application to save, organize, and search personal bookmarks with automatic metadata extraction.
 
 ## Status
-🚧 Work in progress — Authentication UI and base frontend architecture are implemented.
+🚧 Work in progress — Authentication UI, base frontend architecture, and complete Bookmark CRUD are implemented.
 
 ## Stack
 - **Backend**: Python 3.12 + FastAPI
@@ -35,11 +35,12 @@ bookmark-manager/
 │   ├── .dockerignore
 │   ├── ruff.toml               # lint config
 │   └── Dockerfile
-├── frontend/                   # React app - CRUD coming next
+├── frontend/                   # React app
 │   ├── src/
 │   │   ├── api/                # API base client with JWT injection
 │   │   ├── components/         # UI components
 │   │   ├── contexts/           # useAuth context for cross-tab sync
+│   │   ├── hooks/              # React Query hooks for remote state
 │   │   ├── lib/                # Supabase singleton client
 │   │   ├── pages/              # AuthPage (login/signup)
 │   │   ├── styles/             # Design system CSS variables
@@ -114,6 +115,7 @@ GitHub Actions runs on every pull request to `main`:
 - **Backend lint** — ruff on `app/`
 - **Backend tests** — pytest with coverage
 - **Frontend type-check** — `tsc --noEmit` on `frontend/`
+- **Frontend lint** — `eslint` on `frontend/`
 
 ## Design Decisions
 
@@ -128,3 +130,6 @@ A FastAPI backend utilizing the Supabase Python SDK is used rather than connecti
 
 ### Frontend Architecture & Authentication
 I established a robust frontend architecture using React, Vite, and strict TypeScript. Authentication is handled client-side via a Supabase singleton client, with state managed by a `useAuth` context that synchronizes sessions across browser tabs. I configured an API base client that automatically injects JWTs into requests for secure communication with the FastAPI backend. Additionally, I integrated React Query for efficient data fetching and cache management, ensuring a scalable foundation for upcoming features.
+
+### Optimistic UI Updates
+For actions that require immediate user feedback, such as toggling a bookmark's read status, I implemented optimistic updates using React Query. This approach updates the UI instantly, assuming the server request will succeed, and automatically rolls back if an error occurs. This significantly improves the perceived performance and responsiveness of the application.

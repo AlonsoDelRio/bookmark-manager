@@ -3,7 +3,7 @@
 Aplicación web fullstack para guardar, organizar y buscar marcadores personales con extracción automática de metadata.
 
 ## Estado
-🚧 En desarrollo — La interfaz de autenticación y la arquitectura base del frontend están implementadas.
+🚧 En desarrollo — La interfaz de autenticación, la arquitectura base del frontend y el CRUD completo de marcadores están implementados.
 
 ## Stack
 - **Backend**: Python 3.12 + FastAPI
@@ -35,11 +35,12 @@ bookmark-manager/
 │   ├── .dockerignore
 │   ├── ruff.toml               # configuración del linting
 │   └── Dockerfile
-├── frontend/                   # Aplicación en React - CRUD será lo siguiente.
+├── frontend/                   # Aplicación en React
 │   ├── src/
 │   │   ├── api/                # Cliente base de API con inyección de JWT
 │   │   ├── components/         # Componentes de UI
 │   │   ├── contexts/           # Contexto useAuth para sincronización entre pestañas
+│   │   ├── hooks/              # Hooks de React Query para estado remoto
 │   │   ├── lib/                # Cliente singleton de Supabase
 │   │   ├── pages/              # AuthPage (login/registro)
 │   │   ├── styles/             # Variables CSS del sistema de diseño
@@ -113,6 +114,7 @@ GitHub Actions corre en cada pull request a `main`:
 - **Backend lint** — ruff sobre `app/`
 - **Backend tests** — pytest con cobertura
 - **Frontend type-check** — `tsc --noEmit` sobre `frontend/`
+- **Frontend lint** — `eslint` sobre `frontend/`
 
 ## Decisiones de Diseño
 
@@ -127,3 +129,6 @@ Se utiliza un backend en FastAPI implementando el SDK de Supabase para Python, e
 
 ### Arquitectura Frontend y Autenticación
 Implementé una arquitectura frontend robusta utilizando React, Vite y TypeScript en modo estricto. La autenticación se maneja en el lado del cliente mediante un cliente singleton de Supabase, con el estado gestionado por un contexto `useAuth` que sincroniza las sesiones entre pestañas del navegador. Configuré un cliente base para la API que inyecta automáticamente los JWTs en las peticiones para asegurar la comunicación con el backend en FastAPI. Además, integré React Query para la obtención de datos y gestión de caché, garantizando una base escalable para las próximas funcionalidades.
+
+### Actualizaciones Optimistas de la Interfaz (Optimistic UI)
+Para acciones que requieren retroalimentación inmediata, como cambiar el estado de lectura de un marcador, implementé actualizaciones optimistas utilizando React Query. Este enfoque actualiza la interfaz de forma instantánea asumiendo que la petición al servidor será exitosa, y revierte el cambio automáticamente si ocurre un error. Esto mejora significativamente el rendimiento percibido y la fluidez de la aplicación.
