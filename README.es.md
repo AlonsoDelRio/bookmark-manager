@@ -3,12 +3,12 @@
 Aplicación web fullstack para guardar, organizar y buscar marcadores personales con extracción automática de metadata.
 
 ## Estado
-🚧 En desarrollo
+🚧 En desarrollo — La interfaz de autenticación y la arquitectura base del frontend están implementadas.
 
 ## Stack
 - **Backend**: Python 3.12 + FastAPI
 - **Base de datos**: Supabase (PostgreSQL + Auth)
-- **Frontend**: React 18 + TypeScript
+- **Frontend**: React 18 + TypeScript + React Query
 - **Infraestructura**: Docker + GitHub Actions
 
 ## Estructura del proyecto
@@ -35,9 +35,16 @@ bookmark-manager/
 │   ├── .dockerignore
 │   ├── ruff.toml               # configuración del linting
 │   └── Dockerfile
-├── frontend/                   # Solo renderiza "Bookmark Manager — coming soon"
+├── frontend/                   # Aplicación en React - CRUD será lo siguiente.
 │   ├── src/
-│   │   ├── App.tsx
+│   │   ├── api/                # Cliente base de API con inyección de JWT
+│   │   ├── components/         # Componentes de UI
+│   │   ├── contexts/           # Contexto useAuth para sincronización entre pestañas
+│   │   ├── lib/                # Cliente singleton de Supabase
+│   │   ├── pages/              # AuthPage (login/registro)
+│   │   ├── styles/             # Variables CSS del sistema de diseño
+│   │   ├── types/              # Tipos compartidos de TypeScript
+│   │   ├── App.tsx             # Rutas de auth y providers
 │   │   └── main.tsx
 │   ├── .dockerignore
 │   ├── eslint.config.js
@@ -105,6 +112,7 @@ GitHub Actions corre en cada pull request a `main`:
 - **Verify** — verifica la estructura del repositorio
 - **Backend lint** — ruff sobre `app/`
 - **Backend tests** — pytest con cobertura
+- **Frontend type-check** — `tsc --noEmit` sobre `frontend/`
 
 ## Decisiones de Diseño
 
@@ -116,3 +124,6 @@ Si la página no responde, responde con un error, o no se puede extraer el títu
 
 ### Comunicación con Supabase (Backend en FastAPI + SDK)
 Se utiliza un backend en FastAPI implementando el SDK de Supabase para Python, en lugar de conectar directamente desde el frontend o realizar peticiones HTTP manuales. Esto centraliza la lógica de negocio, proveyendo un entorno seguro para tareas que no se pueden hacer en el navegador por temas de CORS, como el scraping de metadatos. El uso del SDK oficial abstrae la complejidad de crear consultas a la API REST.
+
+### Arquitectura Frontend y Autenticación
+Implementé una arquitectura frontend robusta utilizando React, Vite y TypeScript en modo estricto. La autenticación se maneja en el lado del cliente mediante un cliente singleton de Supabase, con el estado gestionado por un contexto `useAuth` que sincroniza las sesiones entre pestañas del navegador. Configuré un cliente base para la API que inyecta automáticamente los JWTs en las peticiones para asegurar la comunicación con el backend en FastAPI. Además, integré React Query para la obtención de datos y gestión de caché, garantizando una base escalable para las próximas funcionalidades.
