@@ -106,3 +106,14 @@ GitHub Actions runs on every pull request to `main`:
 - **Verify** — checks repository structure
 - **Backend lint** — ruff on `app/`
 - **Backend tests** — pytest with coverage
+
+## Design Decisions
+
+### Data Security (RLS)
+Each user can only see and modify their own bookmarks. This is resolved at the database level using Supabase Row Level Security (RLS), not just in the application code. This guarantees that even if there were a logic flaw in the backend application code, the database policies themselves will strictly prevent any user from accessing or modifying another user's data.
+
+### Resilience on Bookmark Creation
+If the page does not respond, returns an error, or the title cannot be extracted, the bookmark is saved anyway with a fallback title (e.g., the URL domain). The creation is not blocked due to an external network failure. Metadata extraction is attempted when saving the URL, but external failures do not block the primary save action.
+
+### Communication with Supabase (FastAPI Backend + SDK)
+A FastAPI backend utilizing the Supabase Python SDK is used rather than connecting directly from the frontend or making manual HTTP requests. This centralizes business logic, providing a secure backend environment to perform tasks restricted in the browser due to CORS, such as scraping metadata. Using the official Supabase SDK also abstracts away the complexity of raw REST API calls.
