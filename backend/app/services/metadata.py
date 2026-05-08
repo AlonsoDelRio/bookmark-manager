@@ -25,7 +25,7 @@ def extract_domain(url: str) -> str:
 def extract_favicon_url(soup: BeautifulSoup, base_url: str) -> str | None:
     # 1. <link rel="icon"> or rel="shortcut icon"
     for rel_name in ["icon", "shortcut icon", "apple-touch-icon"]:
-        rel_val = rel_name 
+        rel_val = rel_name
         tag = soup.find("link", rel=lambda r, rv=rel_val: bool(r) and rv in r.lower())
         if tag and tag.get("href"):
             return urljoin(base_url, tag["href"])
@@ -64,12 +64,12 @@ async def fetch_metadata(
             title_tag = soup.find("title")
             if title_tag and title_tag.string:
                 title = clean_title(title_tag.string)
-            
+
             if not title:
                 og_title = soup.find("meta", property="og:title")
                 if og_title and og_title.get("content"):
                     title = clean_title(og_title["content"])
-            
+
             if not title:
                 tw_title = soup.find("meta", attrs={"name": "twitter:title"})
                 if tw_title and tw_title.get("content"):

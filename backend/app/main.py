@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import metadata, tags, bookmarks
+from app.routers import bookmarks, metadata, tags
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

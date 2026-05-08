@@ -1,8 +1,10 @@
 from unittest.mock import AsyncMock, MagicMock, patch
-from app.services.metadata import clean_title, extract_domain, extract_favicon_url, fetch_metadata
-from bs4 import BeautifulSoup
-import pytest
+
 import httpx
+import pytest
+from bs4 import BeautifulSoup
+
+from app.services.metadata import clean_title, extract_domain, extract_favicon_url, fetch_metadata
 
 # ---------------------------------------------------------------------------
 # Unit tests: pure helper functions

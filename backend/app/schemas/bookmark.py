@@ -1,6 +1,7 @@
-from pydantic import BaseModel, field_validator
 from datetime import datetime
-from typing import List, Optional
+
+from pydantic import BaseModel, field_validator
+
 
 class MetadataResponse(BaseModel):
     url: str
@@ -22,8 +23,8 @@ class BookmarkCreate(BaseModel):
         return list(dict.fromkeys(cleaned))
 
 class BookmarkUpdate(BaseModel):
-    tags: Optional[List[str]] = None
-    is_read: Optional[bool] = None
+    tags: list[str] | None = None
+    is_read: bool | None = None
 
 class BookmarkResponse(BaseModel):
     id: str
